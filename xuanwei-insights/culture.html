@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文化旅游 - 云南省宣威市城市洞察平台</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .culture-hero {
+            background: linear-gradient(135deg, #8b0000 0%, #dc143c 50%, #ff6347 100%);
+            padding: 120px 0 80px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .culture-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23pattern)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .culture-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .culture-stat {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .festival-section {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffd700 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .festival-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .festival-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .festival-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 0.5s ease;
+        }
+        
+        .festival-card:hover::before {
+            transform: scale(1);
+        }
+        
+        .festival-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .festival-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .scenic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .scenic-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .scenic-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .scenic-image {
+            height: 200px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scenic-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .scenic-card:hover .scenic-image::before {
+            transform: translateX(100%);
+        }
+        
+        .scenic-content {
+            padding: 25px;
+        }
+        
+        .scenic-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .star {
+            color: #ffd700;
+            font-size: 0.9rem;
+        }
+        
+        .tourism-data {
+            background: #f8fafc;
+            padding: 80px 0;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .culture-heritage {
+            background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 50%, #9c27b0 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .heritage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .heritage-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .heritage-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .heritage-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+        }
+        
+        .visitor-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .flow-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .flow-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .flow-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .interactive-map {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-placeholder {
+            height: 400px;
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1976d2;
+            font-size: 1.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-markers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff5722;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .marker:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+        
+        .marker::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .marker:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-mountain"></i>
+                宣威城市洞察
+            </a>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="fas fa-home"></i> 首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="geography.html" class="nav-link">
+                        <i class="fas fa-map-marked-alt"></i> 地理交通
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="economy.html" class="nav-link">
+                        <i class="fas fa-chart-line"></i> 经济产业
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="culture.html" class="nav-link active">
+                        <i class="fas fa-theater-masks"></i> 文化旅游
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="dashboard.html" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i> 数据分析
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="timeline.html" class="nav-link">
+                        <i class="fas fa-history"></i> 时间轴
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="upload.html" class="nav-link">
+                        <i class="fas fa-upload"></i> 数据上传
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="export.html" class="nav-link">
+                        <i class="fas fa-download"></i> 报告导出
+                    </a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="main-content">
+        <!-- 英雄区域 -->
+        <section class="culture-hero">
+            <div class="container">
+                <h1 class="hero-title">文化旅游魅力</h1>
+                <p class="hero-subtitle">探索宣威深厚的历史文化底蕴和丰富的旅游资源</p>
+                
+                <div class="culture-stats">
+                    <div class="culture-stat">
+                        <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px;">580万</div>
+                        <div>年接待游客人次</div>
+                    </div>
+                    <div class="culture-stat">
+                        <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px;">68.9亿</div>
+                        <div>旅游综合收入 (元)</div>
+                    </div>
+                    <div class="culture-stat">
+                        <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px;">15个</div>
+                        <div>主要景区景点</div>
+                    </div>
+                    <div class="culture-stat">
+                        <div style="font-size: 2.2rem; font-weight: bold; margin-bottom: 8px;">8项</div>
+                        <div>非物质文化遗产</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 火腿美食文化节 -->
+        <section class="festival-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" style="color: white;">火腿美食文化节</h2>
+                    <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">宣威市最具特色的文化节庆活动，展示火腿文化魅力</p>
+                </div>
+                
+                <div class="festival-grid">
+                    <div class="festival-card">
+                        <div class="festival-icon">
+                            🎭
+                        </div>
+                        <h3>节庆概况</h3>
+                        <p>每年9月举办的宣威火腿美食文化节，是集美食品鉴、文化展示、商贸洽谈于一体的综合性节庆活动。</p>
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>举办时间</span>
+                                <span>每年9月15-25日</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>活动天数</span>
+                                <span>10天</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>参与人数</span>
+                                <span>50万+人次</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="festival-card">
+                        <div class="festival-icon">
+                            🍖
+                        </div>
+                        <h3>美食展示</h3>
+                        <p>汇聚宣威火腿及各类地方特色美食，展示传统制作工艺，让游客品味正宗的宣威味道。</p>
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>参展商家</span>
+                                <span>200+家</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>美食品种</span>
+                                <span>300+种</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>销售额</span>
+                                <span>2.8亿元</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="festival-card">
+                        <div class="festival-icon">
+                            🎪
+                        </div>
+                        <h3>文艺演出</h3>
+                        <p>精彩的民族歌舞表演、传统戏曲演出、现代文艺节目，展现宣威丰富的文化内涵。</p>
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>演出场次</span>
+                                <span>30+场</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>参演团体</span>
+                                <span>15个</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>观众人数</span>
+                                <span>25万人次</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="festival-card">
+                        <div class="festival-icon">
+                            🏪
+                        </div>
+                        <h3>商贸洽谈</h3>
+                        <p>举办火腿产业发展论坛、招商引资洽谈会，促进产业合作与发展。</p>
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>参会企业</span>
+                                <span>500+家</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>签约项目</span>
+                                <span>25个</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>投资金额</span>
+                                <span>15.8亿元</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="visitor-flow">
+                    <div class="flow-item">
+                        <span class="flow-number">12万</span>
+                        <span class="flow-label">省内游客</span>
+                    </div>
+                    <div class="flow-item">
+                        <span class="flow-number">8万</span>
+                        <span class="flow-label">省外游客</span>
+                    </div>
+                    <div class="flow-item">
+                        <span class="flow-number">2万</span>
+                        <span class="flow-label">境外游客</span>
+                    </div>
+                    <div class="flow-item">
+                        <span class="flow-number">28万</span>
+                        <span class="flow-label">本地参与</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主要景点 -->
+        <section class="section" style="padding: 80px 0;">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">主要景区景点</h2>
+                    <p class="section-subtitle">宣威市丰富的自然景观和人文景点</p>
+                </div>
+                
+                <div class="scenic-grid">
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            🏔️
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★★★</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.8分</span>
+                            </div>
+                            <h3>尼珠河大峡谷</h3>
+                            <p>云南省最深的峡谷之一，峡谷深达2000多米，风光壮美，是户外探险和摄影的绝佳去处。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市普立乡</span>
+                                <span><i class="fas fa-ticket-alt"></i> 80元/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            🏘️
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★★☆</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.6分</span>
+                            </div>
+                            <h3>芙蓉彝寨</h3>
+                            <p>保存完好的彝族传统村落，展现原生态的彝族文化和建筑风格，体验民族风情的理想之地。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市龙场镇</span>
+                                <span><i class="fas fa-ticket-alt"></i> 60元/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            🌊
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★★☆</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.5分</span>
+                            </div>
+                            <h3>九龙瀑布群</h3>
+                            <p>由九级瀑布组成的壮观瀑布群，水流湍急，声势浩大，是夏季避暑和观光的热门景点。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市罗平县界</span>
+                                <span><i class="fas fa-ticket-alt"></i> 95元/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            🏛️
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★★☆</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.4分</span>
+                            </div>
+                            <h3>宣威火腿博物馆</h3>
+                            <p>全面展示宣威火腿的历史文化、制作工艺和产业发展，了解火腿文化的重要窗口。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市区</span>
+                                <span><i class="fas fa-ticket-alt"></i> 免费</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            🌸
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★★☆</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.3分</span>
+                            </div>
+                            <h3>东山森林公园</h3>
+                            <p>城市绿肺，森林覆盖率达85%，春季樱花盛开，是市民休闲健身和赏花的好去处。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市东山</span>
+                                <span><i class="fas fa-ticket-alt"></i> 30元/人</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scenic-card">
+                        <div class="scenic-image">
+                            ⛩️
+                        </div>
+                        <div class="scenic-content">
+                            <div class="scenic-rating">
+                                <span class="star">★★★☆☆</span>
+                                <span style="color: #666; font-size: 0.9rem;">4.2分</span>
+                            </div>
+                            <h3>宛水公园</h3>
+                            <p>市中心的综合性公园，集休闲、娱乐、文化于一体，是市民日常休闲的重要场所。</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                <span><i class="fas fa-map-marker-alt"></i> 宣威市中心</span>
+                                <span><i class="fas fa-ticket-alt"></i> 免费</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="interactive-map">
+                    <h3 style="margin-bottom: 20px; color: #2d3748;">景点分布地图</h3>
+                    <div class="map-placeholder">
+                        <div style="text-align: center;">
+                            <i class="fas fa-map" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <div>宣威市旅游景点分布图</div>
+                        </div>
+                        <div class="map-markers">
+                            <div class="marker" style="top: 20%; left: 30%;" data-name="尼珠河大峡谷"></div>
+                            <div class="marker" style="top: 40%; left: 60%;" data-name="芙蓉彝寨"></div>
+                            <div class="marker" style="top: 60%; left: 45%;" data-name="九龙瀑布群"></div>
+                            <div class="marker" style="top: 50%; left: 50%;" data-name="宣威火腿博物馆"></div>
+                            <div class="marker" style="top: 45%; left: 55%;" data-name="东山森林公园"></div>
+                            <div class="marker" style="top: 48%; left: 52%;" data-name="宛水公园"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 文化遗产 -->
+        <section class="culture-heritage">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" style="color: white;">文化遗产保护</h2>
+                    <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">传承和保护宣威深厚的历史文化遗产</p>
+                </div>
+                
+                <div class="heritage-grid">
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🍖
+                        </div>
+                        <h4>宣威火腿制作技艺</h4>
+                        <p>国家级非物质文化遗产，传承600多年的传统制作工艺，是宣威最具代表性的文化符号。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            级别：国家级 | 传承人：8位
+                        </div>
+                    </div>
+                    
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🎭
+                        </div>
+                        <h4>彝族花鼓舞</h4>
+                        <p>省级非物质文化遗产，彝族传统舞蹈，表现丰收喜悦和民族团结，具有浓郁的地方特色。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            级别：省级 | 传承人：12位
+                        </div>
+                    </div>
+                    
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🎵
+                        </div>
+                        <h4>宣威山歌</h4>
+                        <p>市级非物质文化遗产，反映当地人民生活和情感的民间音乐形式，旋律优美，朗朗上口。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            级别：市级 | 传承人：15位
+                        </div>
+                    </div>
+                    
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🏺
+                        </div>
+                        <h4>传统陶艺制作</h4>
+                        <p>县级非物质文化遗产，历史悠久的陶瓷制作技艺，产品实用美观，深受当地人民喜爱。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            级别：县级 | 传承人：6位
+                        </div>
+                    </div>
+                    
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🧵
+                        </div>
+                        <h4>彝族刺绣</h4>
+                        <p>县级非物质文化遗产，彝族妇女的传统手工艺，图案精美，色彩鲜艳，工艺精湛。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            级别：县级 | 传承人：20位
+                        </div>
+                    </div>
+                    
+                    <div class="heritage-card">
+                        <div class="heritage-icon">
+                            🏛️
+                        </div>
+                        <h4>古建筑群</h4>
+                        <p>市级文物保护单位，包括古寺庙、古民居等，展现了宣威深厚的历史文化底蕴。</p>
+                        <div style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">
+                            数量：25处 | 保护级别：市级
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 旅游数据分析 -->
+        <section class="tourism-data">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">旅游数据分析</h2>
+                    <p class="section-subtitle">宣威市旅游业发展趋势和游客流量分析</p>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 20px; color: #2d3748;">游客接待量趋势</h3>
+                        <canvas id="visitorChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 20px; color: #2d3748;">旅游收入构成</h3>
+                        <canvas id="revenueChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 20px; color: #2d3748;">游客来源分布</h3>
+                        <canvas id="sourceChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 style="margin-bottom: 20px; color: #2d3748;">季节性客流变化</h3>
+                        <canvas id="seasonChart" style="max-height: 350px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>宣威城市洞察平台</h3>
+                    <p>致力于为宣威市提供全面、准确、实时的城市数据分析和洞察服务。</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-qq"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="index.html">首页概览</a></li>
+                        <li><a href="geography.html">地理交通</a></li>
+                        <li><a href="economy.html">经济产业</a></li>
+                        <li><a href="culture.html">文化旅游</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>数据服务</h4>
+                    <ul>
+                        <li><a href="dashboard.html">数据分析</a></li>
+                        <li><a href="timeline.html">发展时间轴</a></li>
+                        <li><a href="upload.html">数据上传</a></li>
+                        <li><a href="export.html">报告导出</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section contact-info">
+                    <h4>联系我们</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> 云南省曲靖市宣威市</p>
+                    <p><i class="fas fa-phone"></i> 400-123-4567</p>
+                    <p><i class="fas fa-envelope"></i> info@xuanwei-insights.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 宣威城市洞察平台. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="scripts/culture.js"></script>
+    <script src="scripts/common.js"></script>
+</body>
+</html>

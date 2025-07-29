@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析仪表盘 - 云南省宣威市城市洞察平台</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        .dashboard-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            padding: 120px 0 80px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .dashboard-controls {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            color: #2d3748;
+            white-space: nowrap;
+        }
+        
+        .control-group select,
+        .control-group input {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--card-color, #667eea), var(--card-color-light, #764ba2));
+        }
+        
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            background: linear-gradient(135deg, var(--card-color, #667eea), var(--card-color-light, #764ba2));
+        }
+        
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .kpi-trend.up {
+            color: #10b981;
+        }
+        
+        .kpi-trend.down {
+            color: #ef4444;
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .kpi-progress {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .kpi-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--card-color, #667eea), var(--card-color-light, #764ba2));
+            border-radius: 3px;
+            transition: width 2s ease;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-btn {
+            padding: 6px 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .chart-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .chart-btn.active:hover {
+            color: white;
+        }
+        
+        .full-width-chart {
+            grid-column: 1 / -1;
+        }
+        
+        .data-table {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .table th,
+        .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            position: sticky;
+            top: 0;
+        }
+        
+        .table tr:hover {
+            background: #f7fafc;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .realtime-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+        
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+        
+        .gauge-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .gauge-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .gauge-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: space-between;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-mountain"></i>
+                宣威城市洞察
+            </a>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="fas fa-home"></i> 首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="geography.html" class="nav-link">
+                        <i class="fas fa-map-marked-alt"></i> 地理交通
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="economy.html" class="nav-link">
+                        <i class="fas fa-chart-line"></i> 经济产业
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="culture.html" class="nav-link">
+                        <i class="fas fa-theater-masks"></i> 文化旅游
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="dashboard.html" class="nav-link active">
+                        <i class="fas fa-tachometer-alt"></i> 数据分析
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="timeline.html" class="nav-link">
+                        <i class="fas fa-history"></i> 时间轴
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="upload.html" class="nav-link">
+                        <i class="fas fa-upload"></i> 数据上传
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="export.html" class="nav-link">
+                        <i class="fas fa-download"></i> 报告导出
+                    </a>
+                </li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="main-content">
+        <!-- 英雄区域 -->
+        <section class="dashboard-hero">
+            <div class="container">
+                <h1 class="hero-title">数据分析仪表盘</h1>
+                <p class="hero-subtitle">实时监控宣威市各项关键指标，洞察城市发展趋势</p>
+                
+                <div class="realtime-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>实时数据更新中...</span>
+                    <span id="lastUpdate">最后更新：--</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 控制面板 -->
+        <section class="section" style="padding-top: 40px;">
+            <div class="container">
+                <div class="dashboard-controls">
+                    <div class="control-group">
+                        <label for="timeRange">时间范围：</label>
+                        <select id="timeRange">
+                            <option value="7d">最近7天</option>
+                            <option value="30d" selected>最近30天</option>
+                            <option value="90d">最近90天</option>
+                            <option value="1y">最近1年</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="dataType">数据类型：</label>
+                        <select id="dataType">
+                            <option value="all" selected>全部数据</option>
+                            <option value="economic">经济数据</option>
+                            <option value="population">人口数据</option>
+                            <option value="tourism">旅游数据</option>
+                            <option value="transport">交通数据</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="region">区域：</label>
+                        <select id="region">
+                            <option value="all" selected>全市</option>
+                            <option value="urban">城区</option>
+                            <option value="rural">农村</option>
+                            <option value="industrial">工业区</option>
+                        </select>
+                    </div>
+                    
+                    <button class="refresh-btn" id="refreshData">
+                        <i class="fas fa-sync-alt"></i>
+                        刷新数据
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI指标卡片 -->
+        <section class="section" style="padding-top: 20px;">
+            <div class="container">
+                <div class="kpi-grid">
+                    <div class="kpi-card" style="--card-color: #667eea; --card-color-light: #764ba2;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8.5%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="gdpValue">1,285.6</div>
+                        <div class="kpi-label">GDP总量 (亿元)</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--card-color: #f093fb; --card-color-light: #f5576c;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.1%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="populationValue">142.8</div>
+                        <div class="kpi-label">总人口 (万人)</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 92%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--card-color: #4facfe; --card-color-light: #00f2fe;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-plane"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15.2%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="touristValue">580</div>
+                        <div class="kpi-label">年接待游客 (万人次)</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 78%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--card-color: #43e97b; --card-color-light: #38f9d7;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-industry"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12.8%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="industrialValue">485.2</div>
+                        <div class="kpi-label">工业总产值 (亿元)</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 88%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--card-color: #fa709a; --card-color-light: #fee140;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+18.5%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="revenueValue">68.9</div>
+                        <div class="kpi-label">旅游收入 (亿元)</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 95%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="--card-color: #a8edea; --card-color-light: #fed6e3;">
+                        <div class="kpi-header">
+                            <div class="kpi-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+5.2%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="environmentValue">89.5</div>
+                        <div class="kpi-label">环境质量指数</div>
+                        <div class="kpi-progress">
+                            <div class="kpi-progress-bar" style="width: 89%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 图表区域 -->
+        <section class="section">
+            <div class="container">
+                <div class="chart-grid">
+                    <!-- 综合发展趋势图 -->
+                    <div class="chart-container full-width-chart">
+                        <div class="chart-header">
+                            <h3 class="chart-title">综合发展趋势</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-period="month">月度</button>
+                                <button class="chart-btn" data-period="quarter">季度</button>
+                                <button class="chart-btn" data-period="year">年度</button>
+                            </div>
+                        </div>
+                        <canvas id="trendChart" style="max-height: 400px;"></canvas>
+                    </div>
+                    
+                    <!-- 经济结构分析 -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">经济结构分析</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-type="industry">产业</button>
+                                <button class="chart-btn" data-type="ownership">所有制</button>
+                            </div>
+                        </div>
+                        <canvas id="economicChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <!-- 人口分布 -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">人口结构分布</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-demo="age">年龄</button>
+                                <button class="chart-btn" data-demo="education">教育</button>
+                            </div>
+                        </div>
+                        <canvas id="populationChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <!-- 旅游热力图 -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">旅游热力分析</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-tourism="monthly">月度</button>
+                                <button class="chart-btn" data-tourism="seasonal">季节</button>
+                            </div>
+                        </div>
+                        <canvas id="tourismChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <!-- 交通流量 -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">交通流量监控</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-transport="realtime">实时</button>
+                                <button class="chart-btn" data-transport="daily">日均</button>
+                            </div>
+                        </div>
+                        <canvas id="transportChart" style="max-height: 350px;"></canvas>
+                    </div>
+                    
+                    <!-- 环境质量仪表盘 -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">环境质量监测</h3>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                            <div class="gauge-container">
+                                <canvas id="airQualityGauge" class="gauge-chart"></canvas>
+                                <div class="gauge-value">
+                                    <div class="gauge-number" id="airQualityValue">85</div>
+                                    <div class="gauge-label">空气质量</div>
+                                </div>
+                            </div>
+                            <div class="gauge-container">
+                                <canvas id="waterQualityGauge" class="gauge-chart"></canvas>
+                                <div class="gauge-value">
+                                    <div class="gauge-number" id="waterQualityValue">92</div>
+                                    <div class="gauge-label">水质指数</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据表格 -->
+        <section class="section">
+            <div class="container">
+                <div class="data-table">
+                    <div class="chart-header">
+                        <h3 class="chart-title">关键指标详细数据</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-table="current">当前数据</button>
+                            <button class="chart-btn" data-table="historical">历史对比</button>
+                            <button class="chart-btn" data-table="forecast">预测数据</button>
+                        </div>
+                    </div>
+                    
+                    <table class="table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>指标名称</th>
+                                <th>当前值</th>
+                                <th>目标值</th>
+                                <th>完成率</th>
+                                <th>同比增长</th>
+                                <th>状态</th>
+                                <th>更新时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- 数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>宣威城市洞察平台</h3>
+                    <p>致力于为宣威市提供全面、准确、实时的城市数据分析和洞察服务。</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-qq"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>快速链接</h4>
+                    <ul>
+                        <li><a href="index.html">首页概览</a></li>
+                        <li><a href="geography.html">地理交通</a></li>
+                        <li><a href="economy.html">经济产业</a></li>
+                        <li><a href="culture.html">文化旅游</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>数据服务</h4>
+                    <ul>
+                        <li><a href="dashboard.html">数据分析</a></li>
+                        <li><a href="timeline.html">发展时间轴</a></li>
+                        <li><a href="upload.html">数据上传</a></li>
+                        <li><a href="export.html">报告导出</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section contact-info">
+                    <h4>联系我们</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> 云南省曲靖市宣威市</p>
+                    <p><i class="fas fa-phone"></i> 400-123-4567</p>
+                    <p><i class="fas fa-envelope"></i> info@xuanwei-insights.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 宣威城市洞察平台. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="scripts/dashboard.js"></script>
+    <script src="scripts/common.js"></script>
+</body>
+</html>

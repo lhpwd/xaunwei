@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发展时间轴 - 云南省宣威市城市洞察平台</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 时间轴特定样式 */
+        .timeline-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        .timeline-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 60px;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline-content {
+            width: 45%;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            transform: translateY(-50%);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content::before {
+            right: -30px;
+            border-left-color: white;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::before {
+            left: -30px;
+            border-right-color: white;
+        }
+
+        .timeline-date {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            z-index: 10;
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 4px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #667eea;
+            z-index: 5;
+            margin-top: 60px;
+        }
+
+        .event-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .event-category {
+            display: inline-block;
+            padding: 5px 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .event-description {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .event-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .highlight-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .highlight-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .highlight-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .filter-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            color: #4a5568;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .timeline-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .timeline-line {
+                left: 30px;
+            }
+
+            .timeline-item {
+                flex-direction: column !important;
+                align-items: flex-start;
+                margin-left: 60px;
+            }
+
+            .timeline-content {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .timeline-content::before {
+                left: -30px !important;
+                right: auto !important;
+                border-right-color: white !important;
+                border-left-color: transparent !important;
+            }
+
+            .timeline-date {
+                left: 30px;
+                transform: translateX(-50%);
+            }
+
+            .timeline-icon {
+                left: 30px;
+                transform: translateX(-50%);
+            }
+
+            .timeline-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-city"></i>
+                <span>宣威城市洞察</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> 首页</a></li>
+                <li><a href="geography.html"><i class="fas fa-map-marked-alt"></i> 地理交通</a></li>
+                <li><a href="economy.html"><i class="fas fa-chart-line"></i> 经济产业</a></li>
+                <li><a href="culture.html"><i class="fas fa-theater-masks"></i> 文化旅游</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> 数据分析</a></li>
+                <li><a href="timeline.html" class="active"><i class="fas fa-history"></i> 发展时间轴</a></li>
+                <li><a href="upload.html"><i class="fas fa-upload"></i> 数据上传</a></li>
+                <li><a href="export.html"><i class="fas fa-file-export"></i> 报告导出</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="timeline-hero">
+        <div class="container">
+            <h1 class="fade-in">宣威市发展时间轴</h1>
+            <p class="fade-in">见证城市发展历程，记录重要历史时刻</p>
+            <div class="hero-stats fade-in">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalEvents">156</span>
+                    <span class="stat-label">重大事件</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="yearSpan">75</span>
+                    <span class="stat-label">发展年份</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="milestones">28</span>
+                    <span class="stat-label">重要里程碑</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="hamFestivals">15</span>
+                    <span class="stat-label">火腿节届数</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 统计概览 -->
+    <section class="section">
+        <div class="container">
+            <div class="timeline-stats">
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-value">1949</div>
+                    <div class="stat-label">建县年份</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-drumstick-bite"></i>
+                    </div>
+                    <div class="stat-value">2009</div>
+                    <div class="stat-label">首届火腿节</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-road"></i>
+                    </div>
+                    <div class="stat-value">2016</div>
+                    <div class="stat-label">高铁通车</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-value">2020</div>
+                    <div class="stat-label">脱贫摘帽</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 筛选控制 -->
+    <section class="section">
+        <div class="container">
+            <div class="filter-controls">
+                <button class="filter-btn active" data-filter="all">全部事件</button>
+                <button class="filter-btn" data-filter="economic">经济发展</button>
+                <button class="filter-btn" data-filter="infrastructure">基础设施</button>
+                <button class="filter-btn" data-filter="culture">文化活动</button>
+                <button class="filter-btn" data-filter="social">社会民生</button>
+                <button class="filter-btn" data-filter="environment">生态环境</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 时间轴主体 -->
+    <section class="section">
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            
+            <!-- 2024年 -->
+            <div class="timeline-item fade-in" data-category="economic">
+                <div class="timeline-date">2024年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">经济发展</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-chart-line"></i>
+                        数字经济产业园启动建设
+                    </h3>
+                    <p class="event-description">
+                        宣威市数字经济产业园正式启动建设，总投资15亿元，将打造成为滇东北地区重要的数字经济发展高地，预计带动就业5000余人。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">15亿</span>
+                            <span class="highlight-label">总投资</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">5000+</span>
+                            <span class="highlight-label">带动就业</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">200亩</span>
+                            <span class="highlight-label">占地面积</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2023年 -->
+            <div class="timeline-item fade-in" data-category="culture">
+                <div class="timeline-date">2023年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-drumstick-bite"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">文化活动</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-festival"></i>
+                        第十五届中国·宣威火腿美食文化节
+                    </h3>
+                    <p class="event-description">
+                        成功举办第十五届中国·宣威火腿美食文化节，吸引游客超过50万人次，实现旅游收入8.5亿元，进一步提升了宣威火腿品牌影响力。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">50万+</span>
+                            <span class="highlight-label">游客人次</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">8.5亿</span>
+                            <span class="highlight-label">旅游收入</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">15届</span>
+                            <span class="highlight-label">连续举办</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2022年 -->
+            <div class="timeline-item fade-in" data-category="infrastructure">
+                <div class="timeline-date">2022年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-bridge"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">基础设施</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-road"></i>
+                        宣威至会泽高速公路通车
+                    </h3>
+                    <p class="event-description">
+                        宣威至会泽高速公路正式通车运营，全长68公里，总投资82亿元，进一步完善了区域交通网络，缩短了与周边地区的时空距离。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">68公里</span>
+                            <span class="highlight-label">总长度</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">82亿</span>
+                            <span class="highlight-label">总投资</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">30分钟</span>
+                            <span class="highlight-label">缩短车程</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2021年 -->
+            <div class="timeline-item fade-in" data-category="environment">
+                <div class="timeline-date">2021年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">生态环境</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-tree"></i>
+                        获评国家生态文明建设示范市
+                    </h3>
+                    <p class="event-description">
+                        宣威市成功获评国家生态文明建设示范市，森林覆盖率达到52.8%，空气质量优良天数比例达98.6%，生态环境质量持续改善。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">52.8%</span>
+                            <span class="highlight-label">森林覆盖率</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">98.6%</span>
+                            <span class="highlight-label">空气优良率</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">国家级</span>
+                            <span class="highlight-label">示范称号</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2020年 -->
+            <div class="timeline-item fade-in" data-category="social">
+                <div class="timeline-date">2020年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-hands-helping"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">社会民生</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-trophy"></i>
+                        实现脱贫摘帽目标
+                    </h3>
+                    <p class="event-description">
+                        宣威市顺利通过国家脱贫攻坚普查验收，实现脱贫摘帽目标。累计减贫18.02万人，贫困发生率从2014年的13.36%降至零。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">18.02万</span>
+                            <span class="highlight-label">减贫人数</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">0%</span>
+                            <span class="highlight-label">贫困发生率</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">100%</span>
+                            <span class="highlight-label">脱贫率</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2019年 -->
+            <div class="timeline-item fade-in" data-category="economic">
+                <div class="timeline-date">2019年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">经济发展</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-factory"></i>
+                        宣威火腿产业园建成投产
+                    </h3>
+                    <p class="event-description">
+                        总投资12亿元的宣威火腿产业园正式建成投产，年产能达到5万吨，成为全国最大的火腿生产基地，带动相关产业发展。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">12亿</span>
+                            <span class="highlight-label">总投资</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">5万吨</span>
+                            <span class="highlight-label">年产能</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">3000+</span>
+                            <span class="highlight-label">就业岗位</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2016年 -->
+            <div class="timeline-item fade-in" data-category="infrastructure">
+                <div class="timeline-date">2016年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-train"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">基础设施</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-subway"></i>
+                        沪昆高铁宣威段正式通车
+                    </h3>
+                    <p class="event-description">
+                        沪昆高铁宣威段正式通车运营，宣威正式进入高铁时代。从宣威到昆明仅需1小时，到上海8小时，极大改善了交通条件。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">1小时</span>
+                            <span class="highlight-label">到昆明</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">8小时</span>
+                            <span class="highlight-label">到上海</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">350km/h</span>
+                            <span class="highlight-label">设计时速</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2009年 -->
+            <div class="timeline-item fade-in" data-category="culture">
+                <div class="timeline-date">2009年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">文化活动</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-star"></i>
+                        首届中国·宣威火腿美食文化节
+                    </h3>
+                    <p class="event-description">
+                        成功举办首届中国·宣威火腿美食文化节，开启了宣威火腿文化品牌建设的新篇章，为后续文化旅游发展奠定了基础。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">首届</span>
+                            <span class="highlight-label">火腿节</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">20万+</span>
+                            <span class="highlight-label">参与人次</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">3天</span>
+                            <span class="highlight-label">活动时长</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1958年 -->
+            <div class="timeline-item fade-in" data-category="economic">
+                <div class="timeline-date">1958年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-hammer"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">经济发展</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-cogs"></i>
+                        宣威火腿厂正式成立
+                    </h3>
+                    <p class="event-description">
+                        宣威火腿厂正式成立，标志着宣威火腿从传统手工制作向现代化生产的转变，为宣威火腿产业化发展奠定了基础。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">1958年</span>
+                            <span class="highlight-label">建厂年份</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">现代化</span>
+                            <span class="highlight-label">生产模式</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">产业化</span>
+                            <span class="highlight-label">发展基础</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1949年 -->
+            <div class="timeline-item fade-in" data-category="social">
+                <div class="timeline-date">1949年</div>
+                <div class="timeline-icon">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="event-category">社会民生</div>
+                    <h3 class="event-title">
+                        <i class="fas fa-landmark"></i>
+                        宣威县人民政府成立
+                    </h3>
+                    <p class="event-description">
+                        1949年，宣威县人民政府正式成立，标志着宣威进入了新的历史发展阶段，开启了社会主义建设的新征程。
+                    </p>
+                    <div class="event-highlights">
+                        <div class="highlight-item">
+                            <span class="highlight-value">1949年</span>
+                            <span class="highlight-label">建县年份</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">新中国</span>
+                            <span class="highlight-label">历史起点</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="highlight-value">75年</span>
+                            <span class="highlight-label">发展历程</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> 云南省宣威市建设街道</p>
+                    <p><i class="fas fa-phone"></i> 0874-7162000</p>
+                    <p><i class="fas fa-envelope"></i> info@xuanwei.gov.cn</p>
+                </div>
+                <div class="footer-section">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页概览</a></li>
+                        <li><a href="geography.html">地理交通</a></li>
+                        <li><a href="economy.html">经济产业</a></li>
+                        <li><a href="culture.html">文化旅游</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>数据服务</h3>
+                    <ul>
+                        <li><a href="dashboard.html">数据分析</a></li>
+                        <li><a href="timeline.html">发展时间轴</a></li>
+                        <li><a href="upload.html">数据上传</a></li>
+                        <li><a href="export.html">报告导出</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-qq"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 云南省宣威市城市洞察平台. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="scripts/timeline.js"></script>
+</body>
+</html>

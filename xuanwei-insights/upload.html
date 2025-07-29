@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据上传 - 云南省宣威市城市洞察平台</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        /* 数据上传特定样式 */
+        .upload-hero {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        .upload-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #4facfe;
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #4facfe;
+            background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.uploading {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4, #c6f6d5);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #4facfe;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: scale(1.1);
+            color: #3182ce;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+        }
+
+        .file-info {
+            display: none;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .file-info.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .file-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .file-detail {
+            text-align: center;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4facfe;
+            display: block;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .data-preview {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .data-preview.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .preview-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .preview-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #718096;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preview-tab.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+        }
+
+        .preview-content {
+            display: none;
+        }
+
+        .preview-content.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            font-weight: 600;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chart-control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .chart-control label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .chart-control select {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chart-control select:focus {
+            border-color: #4facfe;
+        }
+
+        .chart-canvas {
+            max-height: 400px;
+        }
+
+        .sample-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .sample-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sample-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .sample-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sample-description {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .sample-format {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .download-sample {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-sample:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #e53e3e;
+            display: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #38a169;
+            display: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .upload-zone {
+                padding: 40px 20px;
+            }
+            
+            .upload-section {
+                padding: 20px;
+            }
+            
+            .chart-controls {
+                flex-direction: column;
+            }
+            
+            .sample-data {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-city"></i>
+                <span>宣威城市洞察</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> 首页</a></li>
+                <li><a href="geography.html"><i class="fas fa-map-marked-alt"></i> 地理交通</a></li>
+                <li><a href="economy.html"><i class="fas fa-chart-line"></i> 经济产业</a></li>
+                <li><a href="culture.html"><i class="fas fa-theater-masks"></i> 文化旅游</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> 数据分析</a></li>
+                <li><a href="timeline.html"><i class="fas fa-history"></i> 发展时间轴</a></li>
+                <li><a href="upload.html" class="active"><i class="fas fa-upload"></i> 数据上传</a></li>
+                <li><a href="export.html"><i class="fas fa-file-export"></i> 报告导出</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="upload-hero">
+        <div class="container">
+            <h1 class="fade-in">数据上传与分析</h1>
+            <p class="fade-in">上传您的数据文件，生成可交互的图表和分析报告</p>
+            <div class="hero-stats fade-in">
+                <div class="stat-item">
+                    <span class="stat-number" id="supportedFormats">2</span>
+                    <span class="stat-label">支持格式</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="maxFileSize">10</span>
+                    <span class="stat-label">最大文件(MB)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="chartTypes">6</span>
+                    <span class="stat-label">图表类型</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="uploadedFiles">0</span>
+                    <span class="stat-label">已上传文件</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容 -->
+    <section class="section">
+        <div class="upload-container">
+            <!-- 文件上传区域 -->
+            <div class="upload-section fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    文件上传
+                </h2>
+                
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">拖拽文件到此处或点击选择文件</div>
+                    <div class="upload-hint">支持 CSV、JSON 格式，最大文件大小 10MB</div>
+                    <div>
+                        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open"></i> 选择文件
+                        </button>
+                        <button class="upload-btn" id="clearBtn" style="background: linear-gradient(135deg, #f56565, #e53e3e);">
+                            <i class="fas fa-trash"></i> 清除数据
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput" class="file-input" accept=".csv,.json" multiple>
+                </div>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <h4>文件信息</h4>
+                    <div class="file-details" id="fileDetails"></div>
+                </div>
+                
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+            </div>
+
+            <!-- 数据预览区域 -->
+            <div class="upload-section data-preview fade-in" id="dataPreview">
+                <h2 class="section-title">
+                    <i class="fas fa-table"></i>
+                    数据预览
+                </h2>
+                
+                <div class="preview-tabs">
+                    <button class="preview-tab active" data-tab="table">
+                        <i class="fas fa-table"></i> 表格视图
+                    </button>
+                    <button class="preview-tab" data-tab="chart">
+                        <i class="fas fa-chart-bar"></i> 图表视图
+                    </button>
+                    <button class="preview-tab" data-tab="stats">
+                        <i class="fas fa-calculator"></i> 统计信息
+                    </button>
+                </div>
+                
+                <div class="preview-content active" id="tableView">
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="dataTable">
+                            <thead id="tableHead"></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="preview-content" id="chartView">
+                    <div class="chart-controls">
+                        <div class="chart-control">
+                            <label>图表类型</label>
+                            <select id="chartType">
+                                <option value="bar">柱状图</option>
+                                <option value="line">折线图</option>
+                                <option value="pie">饼图</option>
+                                <option value="doughnut">环形图</option>
+                                <option value="scatter">散点图</option>
+                                <option value="radar">雷达图</option>
+                            </select>
+                        </div>
+                        <div class="chart-control">
+                            <label>X轴数据</label>
+                            <select id="xAxisData"></select>
+                        </div>
+                        <div class="chart-control">
+                            <label>Y轴数据</label>
+                            <select id="yAxisData"></select>
+                        </div>
+                        <div class="chart-control">
+                            <label>数据分组</label>
+                            <select id="groupData">
+                                <option value="">无分组</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dataChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="preview-content" id="statsView">
+                    <div id="statisticsContainer"></div>
+                </div>
+            </div>
+
+            <!-- 示例数据区域 -->
+            <div class="upload-section fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-download"></i>
+                    示例数据模板
+                </h2>
+                
+                <div class="sample-data">
+                    <div class="sample-card" data-sample="economic">
+                        <h3 class="sample-title">
+                            <i class="fas fa-chart-line"></i>
+                            经济数据模板
+                        </h3>
+                        <p class="sample-description">包含GDP、产业结构、投资等经济指标数据</p>
+                        <div class="sample-format">
+                            年份,GDP(亿元),第一产业,第二产业,第三产业<br>
+                            2020,1200.5,180.2,540.8,479.5<br>
+                            2021,1285.6,185.3,580.2,520.1
+                        </div>
+                        <button class="download-sample" onclick="downloadSample('economic')">
+                            <i class="fas fa-download"></i> 下载模板
+                        </button>
+                    </div>
+                    
+                    <div class="sample-card" data-sample="population">
+                        <h3 class="sample-title">
+                            <i class="fas fa-users"></i>
+                            人口数据模板
+                        </h3>
+                        <p class="sample-description">包含人口总数、年龄结构、教育水平等数据</p>
+                        <div class="sample-format">
+                            年龄段,男性(万人),女性(万人),总计(万人)<br>
+                            0-14岁,12.5,11.8,24.3<br>
+                            15-24岁,8.9,8.2,17.1
+                        </div>
+                        <button class="download-sample" onclick="downloadSample('population')">
+                            <i class="fas fa-download"></i> 下载模板
+                        </button>
+                    </div>
+                    
+                    <div class="sample-card" data-sample="tourism">
+                        <h3 class="sample-title">
+                            <i class="fas fa-map-marked-alt"></i>
+                            旅游数据模板
+                        </h3>
+                        <p class="sample-description">包含游客数量、旅游收入、景点数据等</p>
+                        <div class="sample-format">
+                            月份,游客数量(万人次),旅游收入(亿元)<br>
+                            1月,35.2,4.2<br>
+                            2月,28.5,3.5
+                        </div>
+                        <button class="download-sample" onclick="downloadSample('tourism')">
+                            <i class="fas fa-download"></i> 下载模板
+                        </button>
+                    </div>
+                    
+                    <div class="sample-card" data-sample="transport">
+                        <h3 class="sample-title">
+                            <i class="fas fa-road"></i>
+                            交通数据模板
+                        </h3>
+                        <p class="sample-description">包含交通流量、运输量、基础设施数据</p>
+                        <div class="sample-format">
+                            道路类型,里程(公里),日均流量(万车次)<br>
+                            高速公路,156.8,15.8<br>
+                            国道,289.5,12.3
+                        </div>
+                        <button class="download-sample" onclick="downloadSample('transport')">
+                            <i class="fas fa-download"></i> 下载模板
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> 云南省宣威市建设街道</p>
+                    <p><i class="fas fa-phone"></i> 0874-7162000</p>
+                    <p><i class="fas fa-envelope"></i> info@xuanwei.gov.cn</p>
+                </div>
+                <div class="footer-section">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页概览</a></li>
+                        <li><a href="geography.html">地理交通</a></li>
+                        <li><a href="economy.html">经济产业</a></li>
+                        <li><a href="culture.html">文化旅游</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>数据服务</h3>
+                    <ul>
+                        <li><a href="dashboard.html">数据分析</a></li>
+                        <li><a href="timeline.html">发展时间轴</a></li>
+                        <li><a href="upload.html">数据上传</a></li>
+                        <li><a href="export.html">报告导出</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-qq"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 云南省宣威市城市洞察平台. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="scripts/upload.js"></script>
+</body>
+</html>

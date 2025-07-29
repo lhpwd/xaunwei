@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报告导出 - 云南省宣威市城市洞察平台</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* 报告导出特定样式 */
+        .export-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .export-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 90,90 10,90" fill="white" opacity="0.05"/></svg>') repeat;
+            animation: float 25s infinite linear;
+        }
+
+        .export-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .export-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .export-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .export-card {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .export-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+        }
+
+        .export-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+        }
+
+        .export-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .export-card:hover .export-icon {
+            transform: scale(1.1);
+            color: #5a67d8;
+        }
+
+        .export-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .export-description {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .export-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .export-features li {
+            color: #4a5568;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-features li i {
+            color: #48bb78;
+            font-size: 12px;
+        }
+
+        .config-panel {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .config-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-input,
+        .config-select,
+        .config-textarea {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .config-input:focus,
+        .config-select:focus,
+        .config-textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .config-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: #4a5568;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .preview-section {
+            margin-top: 40px;
+        }
+
+        .preview-container {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            min-height: 400px;
+        }
+
+        .preview-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .preview-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .preview-subtitle {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .preview-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .preview-chart {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .preview-chart h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .chart-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+        }
+
+        .action-btn.success {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .progress-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .progress-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .progress-text {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .progress-detail {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .export-history {
+            margin-top: 40px;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .history-meta {
+            font-size: 12px;
+            color: #718096;
+            display: flex;
+            gap: 15px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .history-btn {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .template-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .template-card.selected {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .template-preview {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-size: 12px;
+        }
+
+        .template-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .template-description {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .export-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-city"></i>
+                <span>宣威城市洞察</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> 首页</a></li>
+                <li><a href="geography.html"><i class="fas fa-map-marked-alt"></i> 地理交通</a></li>
+                <li><a href="economy.html"><i class="fas fa-chart-line"></i> 经济产业</a></li>
+                <li><a href="culture.html"><i class="fas fa-theater-masks"></i> 文化旅游</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> 数据分析</a></li>
+                <li><a href="timeline.html"><i class="fas fa-history"></i> 发展时间轴</a></li>
+                <li><a href="upload.html"><i class="fas fa-upload"></i> 数据上传</a></li>
+                <li><a href="export.html" class="active"><i class="fas fa-file-export"></i> 报告导出</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="export-hero">
+        <div class="container">
+            <h1 class="fade-in">报告导出中心</h1>
+            <p class="fade-in">生成专业的分析报告和图表，支持多种格式导出</p>
+            <div class="hero-stats fade-in">
+                <div class="stat-item">
+                    <span class="stat-number" id="exportFormats">3</span>
+                    <span class="stat-label">导出格式</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="reportTemplates">5</span>
+                    <span class="stat-label">报告模板</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="chartTypes">8</span>
+                    <span class="stat-label">图表类型</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="exportedReports">0</span>
+                    <span class="stat-label">已导出报告</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容 -->
+    <section class="section">
+        <div class="export-container">
+            <!-- 导出类型选择 -->
+            <div class="export-section fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-file-export"></i>
+                    选择导出类型
+                </h2>
+                
+                <div class="export-options">
+                    <div class="export-card" data-type="pdf">
+                        <div class="export-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <h3 class="export-title">PDF 报告</h3>
+                        <p class="export-description">生成完整的分析报告，包含图表、数据和文字说明</p>
+                        <ul class="export-features">
+                            <li><i class="fas fa-check"></i> 多页面布局</li>
+                            <li><i class="fas fa-check"></i> 高质量图表</li>
+                            <li><i class="fas fa-check"></i> 自定义封面</li>
+                            <li><i class="fas fa-check"></i> 数据表格</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="export-card" data-type="image">
+                        <div class="export-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <h3 class="export-title">图表截图</h3>
+                        <p class="export-description">导出高清图表图片，适用于演示和分享</p>
+                        <ul class="export-features">
+                            <li><i class="fas fa-check"></i> 高分辨率</li>
+                            <li><i class="fas fa-check"></i> 多种格式</li>
+                            <li><i class="fas fa-check"></i> 批量导出</li>
+                            <li><i class="fas fa-check"></i> 透明背景</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="export-card" data-type="data">
+                        <div class="export-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h3 class="export-title">数据导出</h3>
+                        <p class="export-description">导出原始数据和分析结果，支持多种数据格式</p>
+                        <ul class="export-features">
+                            <li><i class="fas fa-check"></i> CSV 格式</li>
+                            <li><i class="fas fa-check"></i> JSON 格式</li>
+                            <li><i class="fas fa-check"></i> Excel 格式</li>
+                            <li><i class="fas fa-check"></i> 数据筛选</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 报告模板选择 -->
+            <div class="export-section fade-in" id="templateSection" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-file-alt"></i>
+                    选择报告模板
+                </h2>
+                
+                <div class="templates-grid">
+                    <div class="template-card" data-template="comprehensive">
+                        <div class="template-preview">综合报告预览</div>
+                        <div class="template-name">综合分析报告</div>
+                        <div class="template-description">包含所有模块的完整分析报告</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="economic">
+                        <div class="template-preview">经济报告预览</div>
+                        <div class="template-name">经济发展报告</div>
+                        <div class="template-description">专注于经济数据和产业分析</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="tourism">
+                        <div class="template-preview">旅游报告预览</div>
+                        <div class="template-name">文化旅游报告</div>
+                        <div class="template-description">文化旅游数据和景点分析</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="transport">
+                        <div class="template-preview">交通报告预览</div>
+                        <div class="template-name">交通发展报告</div>
+                        <div class="template-description">交通基础设施和流量分析</div>
+                    </div>
+                    
+                    <div class="template-card" data-template="custom">
+                        <div class="template-preview">自定义预览</div>
+                        <div class="template-name">自定义报告</div>
+                        <div class="template-description">根据需求自定义报告内容</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配置面板 -->
+            <div class="export-section fade-in" id="configSection" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    导出配置
+                </h2>
+                
+                <div class="config-panel">
+                    <div class="config-grid">
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-heading"></i>
+                                报告标题
+                            </label>
+                            <input type="text" class="config-input" id="reportTitle" value="宣威市城市洞察分析报告" placeholder="输入报告标题">
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-user"></i>
+                                作者
+                            </label>
+                            <input type="text" class="config-input" id="reportAuthor" value="宣威市政府" placeholder="输入作者名称">
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-calendar"></i>
+                                报告日期
+                            </label>
+                            <input type="date" class="config-input" id="reportDate">
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-palette"></i>
+                                主题色彩
+                            </label>
+                            <select class="config-select" id="reportTheme">
+                                <option value="blue">蓝色主题</option>
+                                <option value="green">绿色主题</option>
+                                <option value="purple">紫色主题</option>
+                                <option value="red">红色主题</option>
+                                <option value="orange">橙色主题</option>
+                            </select>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                                页面尺寸
+                            </label>
+                            <select class="config-select" id="pageSize">
+                                <option value="a4">A4 (210×297mm)</option>
+                                <option value="a3">A3 (297×420mm)</option>
+                                <option value="letter">Letter (216×279mm)</option>
+                                <option value="legal">Legal (216×356mm)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label class="config-label">
+                                <i class="fas fa-image"></i>
+                                图片质量
+                            </label>
+                            <select class="config-select" id="imageQuality">
+                                <option value="high">高质量 (300 DPI)</option>
+                                <option value="medium">中等质量 (150 DPI)</option>
+                                <option value="low">低质量 (72 DPI)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="config-group">
+                        <label class="config-label">
+                            <i class="fas fa-comment-alt"></i>
+                            报告描述
+                        </label>
+                        <textarea class="config-textarea" id="reportDescription" placeholder="输入报告的简要描述...">本报告基于宣威市最新数据，全面分析了城市发展现状、经济结构、文化旅游、交通建设等各个方面，为城市规划和决策提供数据支撑。</textarea>
+                    </div>
+                    
+                    <div class="config-group">
+                        <label class="config-label">
+                            <i class="fas fa-list-check"></i>
+                            包含内容
+                        </label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeCover" checked>
+                                <label for="includeCover">封面页</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeToc" checked>
+                                <label for="includeToc">目录</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeExecutive" checked>
+                                <label for="includeExecutive">执行摘要</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeCharts" checked>
+                                <label for="includeCharts">图表分析</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeData" checked>
+                                <label for="includeData">数据表格</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="includeAppendix">
+                                <label for="includeAppendix">附录</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 预览区域 -->
+            <div class="export-section preview-section fade-in" id="previewSection" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-eye"></i>
+                    报告预览
+                </h2>
+                
+                <div class="preview-container" id="reportPreview">
+                    <div class="preview-header">
+                        <h1 class="preview-title" id="previewTitle">宣威市城市洞察分析报告</h1>
+                        <p class="preview-subtitle" id="previewSubtitle">2024年度综合分析报告</p>
+                    </div>
+                    
+                    <div class="preview-content">
+                        <div class="preview-chart">
+                            <h4>经济发展趋势</h4>
+                            <div class="chart-placeholder">GDP增长趋势图</div>
+                        </div>
+                        
+                        <div class="preview-chart">
+                            <h4>人口结构分析</h4>
+                            <div class="chart-placeholder">人口年龄结构图</div>
+                        </div>
+                        
+                        <div class="preview-chart">
+                            <h4>旅游收入统计</h4>
+                            <div class="chart-placeholder">旅游收入柱状图</div>
+                        </div>
+                        
+                        <div class="preview-chart">
+                            <h4>交通流量分析</h4>
+                            <div class="chart-placeholder">交通流量热力图</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn secondary" id="backBtn">
+                        <i class="fas fa-arrow-left"></i>
+                        返回配置
+                    </button>
+                    <button class="action-btn" id="generateBtn">
+                        <i class="fas fa-file-download"></i>
+                        生成报告
+                    </button>
+                    <button class="action-btn success" id="previewBtn">
+                        <i class="fas fa-eye"></i>
+                        预览报告
+                    </button>
+                </div>
+            </div>
+
+            <!-- 导出历史 -->
+            <div class="export-section export-history fade-in">
+                <h2 class="section-title">
+                    <i class="fas fa-history"></i>
+                    导出历史
+                </h2>
+                
+                <div class="history-list" id="historyList">
+                    <!-- 历史记录将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 进度覆盖层 -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-content">
+            <div class="progress-spinner"></div>
+            <div class="progress-text" id="progressText">正在生成报告...</div>
+            <div class="progress-detail" id="progressDetail">请稍候，这可能需要几分钟时间</div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> 云南省宣威市建设街道</p>
+                    <p><i class="fas fa-phone"></i> 0874-7162000</p>
+                    <p><i class="fas fa-envelope"></i> info@xuanwei.gov.cn</p>
+                </div>
+                <div class="footer-section">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页概览</a></li>
+                        <li><a href="geography.html">地理交通</a></li>
+                        <li><a href="economy.html">经济产业</a></li>
+                        <li><a href="culture.html">文化旅游</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>数据服务</h3>
+                    <ul>
+                        <li><a href="dashboard.html">数据分析</a></li>
+                        <li><a href="timeline.html">发展时间轴</a></li>
+                        <li><a href="upload.html">数据上传</a></li>
+                        <li><a href="export.html">报告导出</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-weixin"></i></a>
+                        <a href="#"><i class="fab fa-weibo"></i></a>
+                        <a href="#"><i class="fab fa-qq"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 云南省宣威市城市洞察平台. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="scripts/export.js"></script>
+</body>
+</html>
